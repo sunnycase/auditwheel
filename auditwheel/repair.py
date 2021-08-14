@@ -28,9 +28,20 @@ WHEEL_INFO_RE = re.compile(
     re.VERBOSE).match
 
 
+def _is_in_list(soname: str, items: Optional[List[str]]) -> Optional[str]:
+    for item in (items or []):
+        if item in soname:
+            return item
+    return None
+
+
+def _filter(items: Optional[List[str]]) -> List[str]:
+    return [_.strip() for _ in (items or []) if _.strip()]
+
+
 def repair_wheel(wheel_path: str, abis: List[str], lib_sdir: str, out_dir: str,
                  update_tags: bool, patcher: ElfPatcher,
-                 strip: bool = False) -> Optional[str]:
+                 strip: bool = False, exclude: Optional[List[str]] = None) -> Optional[str]:
 
     external_refs_by_fn = get_wheel_elfdata(wheel_path)[1]
 
@@ -43,6 +54,9 @@ def repair_wheel(wheel_path: str, abis: List[str], lib_sdir: str, out_dir: str,
         out_dir = abspath(out_dir)
 
     wheel_fname = basename(wheel_path)
+
+    # Remove empty strings in include/exclude list
+    exclude = _filter(exclude)
 
     with InWheelCtx(wheel_path) as ctx:
         ctx.out_wheel = pjoin(out_dir, wheel_fname)
@@ -63,6 +77,13 @@ def repair_wheel(wheel_path: str, abis: List[str], lib_sdir: str, out_dir: str,
 
             ext_libs = v[abis[0]]['libs']  # type: Dict[str, str]
             for soname, src_path in ext_libs.items():
+                # exclude some libraries
+                exc = _is_in_list(soname, exclude)
+                if exc:
+                    logger.info(
+                        f'Excluding {soname} (match exclude string `{exc}`)')
+                    continue
+
                 if src_path is None:
                     raise ValueError(('Cannot repair wheel, because required '
                                       'library "%s" could not be located') %
