@@ -43,12 +43,6 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-                "CXXABI": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
                 "GCC": {
                     "type": "array",
                     "items": {
@@ -56,12 +50,6 @@
                     }
                 },
                 "GLIBC": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "GLIBCXX": {
                     "type": "array",
                     "items": {
                         "type": "string"
